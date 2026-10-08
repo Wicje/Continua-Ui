@@ -209,7 +209,7 @@ export const GoogleAppsDrawer: React.FC<GoogleAppsDrawerProps> = ({ isOpen }) =>
             <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#252b37] flex items-center justify-center shadow-[0_4px_10px_rgba(160,175,200,0.35),-2px_-2px_6px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.4),-1px_-1px_4px_rgba(255,255,255,0.05)] group-hover:scale-105 group-hover:shadow-[0_6px_14px_rgba(160,175,200,0.45)] transition-all">
               {app.icon}
             </div>
-            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mt-1.5 text-center truncate max-w-[70px]">
+            <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 mt-1.5 text-center truncate max-w-[70px]">
               {app.name}
             </span>
           </a>

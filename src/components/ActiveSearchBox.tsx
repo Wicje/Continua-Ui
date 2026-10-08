@@ -47,8 +47,8 @@ export const ActiveSearchBox: React.FC<ActiveSearchBoxProps> = ({
   return (
     <div className="w-full max-w-[440px] md:max-w-[460px] neu-popover rounded-[26px] p-3.5 pb-2.5 border border-white/70 dark:border-white/10 shadow-[0_20px_45px_rgba(150,165,190,0.35)] dark:shadow-[0_20px_45px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-150">
       {/* Top Search Row */}
-      <div className="flex items-center gap-3 px-2 py-1 pb-2 border-b border-slate-200/50 dark:border-slate-800">
-        <Search className="w-4 h-4 text-slate-400 shrink-0" />
+      <div className="flex items-center gap-3 px-2 py-1 pb-2 border-b border-slate-200/70 dark:border-slate-800">
+        <Search className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0 stroke-[2.2]" />
         <input
           ref={inputRef}
           type="text"
@@ -60,20 +60,20 @@ export const ActiveSearchBox: React.FC<ActiveSearchBoxProps> = ({
             }
           }}
           placeholder="Search Google or type a URL"
-          className="flex-1 bg-transparent border-none outline-none text-xs md:text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 font-normal"
+          className="flex-1 bg-transparent border-none outline-none text-xs md:text-sm text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 font-medium"
         />
         {query && (
           <button
             onClick={onClear}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+            className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 p-0.5 cursor-pointer"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3.5 h-3.5 stroke-[2.2]" />
           </button>
         )}
         <div className="w-[1px] h-4 bg-slate-300 dark:bg-slate-700 mx-0.5" />
         <button
           onClick={onVoiceClick}
-          className="p-1 hover:scale-105 transition-transform"
+          className="p-1 hover:scale-105 transition-transform cursor-pointer"
           title="Search by voice"
         >
           <GoogleMicIcon className="w-4 h-4" />
@@ -89,11 +89,11 @@ export const ActiveSearchBox: React.FC<ActiveSearchBoxProps> = ({
               onChangeQuery(pred);
               onExecuteSearch(pred);
             }}
-            className="flex items-center gap-3 px-2.5 py-1.5 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800/40 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors group"
+            className="flex items-center gap-3 px-2.5 py-1.5 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-800/40 text-xs text-slate-800 dark:text-slate-200 cursor-pointer transition-colors group"
           >
-            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 shrink-0" />
-            <span className="font-normal truncate">
-              <span className="font-semibold text-slate-900 dark:text-white">
+            <Search className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-500 shrink-0 stroke-[2.2]" />
+            <span className="font-medium truncate text-slate-750">
+              <span className="font-bold text-slate-950 dark:text-white">
                 {pred.slice(0, (query || 'neumorphism ui').length)}
               </span>
               {pred.slice((query || 'neumorphism ui').length)}
@@ -107,13 +107,13 @@ export const ActiveSearchBox: React.FC<ActiveSearchBoxProps> = ({
         <div className="flex items-center justify-center gap-3 mb-2">
           <button
             onClick={() => onExecuteSearch(query || 'neumorphism ui')}
-            className="px-4 py-1.5 rounded-xl neu-btn text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400"
+            className="px-4 py-1.5 rounded-xl neu-btn text-xs font-semibold text-slate-850 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
           >
             Google Search
           </button>
           <button
             onClick={() => onExecuteSearch(`${query || 'neumorphism ui'} feeling lucky`)}
-            className="px-4 py-1.5 rounded-xl neu-btn text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400"
+            className="px-4 py-1.5 rounded-xl neu-btn text-xs font-semibold text-slate-850 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
           >
             I&apos;m Feeling Lucky
           </button>
@@ -124,7 +124,7 @@ export const ActiveSearchBox: React.FC<ActiveSearchBoxProps> = ({
             href="https://www.google.com/preferences"
             target="_blank"
             rel="noreferrer"
-            className="text-[9px] text-slate-400 hover:underline italic"
+            className="text-[10px] text-slate-600 dark:text-slate-400 hover:underline italic font-medium"
           >
             Report inappropriate predictions
           </a>

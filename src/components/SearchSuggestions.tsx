@@ -92,19 +92,19 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
       {/* Recent searches */}
       {recentSearches.length > 0 && trimmed === '' && (
         <div className="mb-2">
-          <div className="text-[11px] font-semibold text-slate-400 px-2 py-1 uppercase tracking-wider">
+          <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 px-2 py-1 uppercase tracking-wider">
             Recent Searches
           </div>
           {recentSearches.slice(0, 4).map((item) => (
             <div
               key={item}
-              className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300 cursor-pointer group text-xs"
+              className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-800/40 text-slate-850 dark:text-slate-200 cursor-pointer group text-xs font-medium"
             >
               <div
                 className="flex items-center gap-2.5 flex-1"
                 onClick={() => onSelect(item)}
               >
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
                 <span>{item}</span>
               </div>
               {onRemoveRecent && (
@@ -113,7 +113,7 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
                     e.stopPropagation();
                     onRemoveRecent(item);
                   }}
-                  className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 text-[10px] px-1"
+                  className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-600 text-[10px] px-1 font-bold"
                 >
                   ✕
                 </button>
@@ -128,19 +128,19 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
         <div className="space-y-0.5">
           <div
             onClick={() => onSelect(trimmed)}
-            className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 cursor-pointer text-xs font-medium"
+            className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-800/40 text-slate-950 dark:text-slate-100 cursor-pointer text-xs font-semibold"
           >
-            <Search className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span>Search for &quot;<span className="text-blue-600 dark:text-blue-400">{trimmed}</span>&quot;</span>
+            <Search className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 stroke-[2.2]" />
+            <span>Search for &quot;<span className="text-blue-600 dark:text-blue-400 font-bold">{trimmed}</span>&quot;</span>
           </div>
 
           {matchedTrending.map((suggestion) => (
             <div
               key={suggestion}
               onClick={() => onSelect(suggestion)}
-              className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-300 cursor-pointer text-xs"
+              className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-200 cursor-pointer text-xs font-medium"
             >
-              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <Search className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               <span>{suggestion}</span>
             </div>
           ))}

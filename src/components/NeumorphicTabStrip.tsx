@@ -125,8 +125,8 @@ export const NeumorphicTabStrip: React.FC<NeumorphicTabStripProps> = ({
                 tab.isPinned ? 'px-2.5 py-1.5 rounded-xl' : 'px-3.5 py-2 rounded-t-2xl max-w-[210px] min-w-[130px]'
               } ${
                 isActive
-                  ? 'bg-[#eef2f7] dark:bg-[#1a1e27] text-slate-800 dark:text-slate-100 shadow-[0_-2px_8px_rgba(160,175,200,0.25),inset_0_1px_1px_rgba(255,255,255,0.95)] dark:shadow-[0_-2px_8px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.08)]'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-800/40'
+                  ? 'bg-[#eef2f7] dark:bg-[#1a1e27] text-slate-950 dark:text-white font-bold shadow-[0_-2px_8px_rgba(160,175,200,0.25),inset_0_1px_1px_rgba(255,255,255,0.95)] dark:shadow-[0_-2px_8px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.08)]'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 font-semibold'
               }`}
             >
               {/* Active Tab Extruded Side Fillets (Signature Chrome Neumorphic Shape) */}
@@ -146,7 +146,7 @@ export const NeumorphicTabStrip: React.FC<NeumorphicTabStripProps> = ({
 
               {/* Title & Domain (hidden if pinned) */}
               {!tab.isPinned && (
-                <span className="text-xs font-medium truncate flex-1 tracking-tight">
+                <span className="text-xs truncate flex-1 tracking-tight">
                   {tab.title}
                 </span>
               )}
@@ -168,7 +168,7 @@ export const NeumorphicTabStrip: React.FC<NeumorphicTabStripProps> = ({
                   }}
                   className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                     isActive || isHovered
-                      ? 'opacity-80 hover:opacity-100 hover:bg-slate-300/60 dark:hover:bg-slate-700/60 text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      ? 'opacity-85 hover:opacity-100 hover:bg-slate-300/80 dark:hover:bg-slate-700/60 text-slate-600 hover:text-slate-950 dark:hover:text-white'
                       : 'opacity-0'
                   }`}
                   title="Close tab"
@@ -186,11 +186,11 @@ export const NeumorphicTabStrip: React.FC<NeumorphicTabStripProps> = ({
             playChime();
             onAddTab();
           }}
-          className="w-7 h-7 rounded-xl neu-btn flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all ml-1 shrink-0 group"
+          className="w-7 h-7 rounded-xl neu-btn flex items-center justify-center text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all ml-1 shrink-0 group font-bold"
           title="Open new tab"
           aria-label="New tab"
         >
-          <Plus className="w-3.5 h-3.5 stroke-[2] group-hover:scale-110 transition-transform" />
+          <Plus className="w-3.5 h-3.5 stroke-[2.2] group-hover:scale-110 transition-transform" />
         </button>
       </div>
 
@@ -198,17 +198,17 @@ export const NeumorphicTabStrip: React.FC<NeumorphicTabStripProps> = ({
       <div className="flex items-center gap-1.5 shrink-0 pl-2">
         <button
           onClick={() => playTactileClick()}
-          className="w-7 h-7 rounded-xl neu-btn flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all"
+          className="w-7 h-7 rounded-xl neu-btn flex items-center justify-center text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all font-semibold"
           title="Search tabs"
         >
-          <Search className="w-3 h-3" />
+          <Search className="w-3 h-3 stroke-[2.2]" />
         </button>
         <button
           onClick={() => playTactileClick()}
-          className="w-7 h-7 rounded-xl neu-btn flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all"
+          className="w-7 h-7 rounded-xl neu-btn flex items-center justify-center text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-all font-semibold"
           title="Tab overview"
         >
-          <ChevronDown className="w-3 h-3" />
+          <ChevronDown className="w-3 h-3 stroke-[2.2]" />
         </button>
       </div>
     </div>

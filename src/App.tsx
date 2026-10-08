@@ -23,6 +23,8 @@ import {
   Layers,
   Volume2,
   VolumeX,
+  ChevronUp,
+  Sliders,
 } from 'lucide-react';
 import { GoogleLogo, GoogleMicIcon } from './components/GoogleLogos';
 import { GoogleWordmark } from './components/GoogleWordmark';
@@ -144,6 +146,108 @@ export default function App() {
   const [showAmbientSpheres, setShowAmbientSpheres] = useState(true);
   const [showTabStrip, setShowTabStrip] = useState(true);
 
+  // Wallpaper & Aesthetics State (persisted in localStorage)
+  const [activeWallpaper, setActiveWallpaper] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('neu_wallpaper') || null;
+    }
+    return null;
+  });
+  const [wallpaperBlur, setWallpaperBlur] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('neu_wallpaper_blur');
+      return saved !== null ? Number(saved) : 0;
+    }
+    return 0;
+  });
+  const [wallpaperDim, setWallpaperDim] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('neu_wallpaper_dim');
+      return saved !== null ? Number(saved) : 0.85;
+    }
+    return 0.85;
+  });
+  const [frostedCard, setFrostedCard] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('neu_frosted_card');
+      return saved !== null ? saved === 'true' : false;
+    }
+    return false;
+  });
+  const [customUserWallpapers, setCustomUserWallpapers] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('neu_custom_wallpapers');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  const handleSelectWallpaper = (wp: string | null) => {
+    playChime();
+    setActiveWallpaper(wp);
+    if (wp) {
+      localStorage.setItem('neu_wallpaper', wp);
+    } else {
+      localStorage.removeItem('neu_wallpaper');
+    }
+  };
+
+  const handleChangeWallpaperBlur = (blur: number) => {
+    setWallpaperBlur(blur);
+    localStorage.setItem('neu_wallpaper_blur', String(blur));
+  };
+
+  const handleChangeWallpaperDim = (dim: number) => {
+    setWallpaperDim(dim);
+    localStorage.setItem('neu_wallpaper_dim', String(dim));
+  };
+
+  const handleToggleFrostedCard = () => {
+    const next = !frostedCard;
+    setFrostedCard(next);
+    localStorage.setItem('neu_frosted_card', String(next));
+  };
+
+  const handleAddCustomWallpaper = (newWp: string) => {
+    const updated = [newWp, ...customUserWallpapers.filter((w) => w !== newWp)].slice(0, 16);
+    setCustomUserWallpapers(updated);
+    try {
+      localStorage.setItem('neu_custom_wallpapers', JSON.stringify(updated));
+    } catch {
+      // Ignore if localStorage quota reached
+    }
+  };
+
+  const handleRemoveCustomWallpaper = (wpToRemove: string) => {
+    const updated = customUserWallpapers.filter((w) => w !== wpToRemove);
+    setCustomUserWallpapers(updated);
+    localStorage.setItem('neu_custom_wallpapers', JSON.stringify(updated));
+    if (activeWallpaper === wpToRemove) {
+      handleSelectWallpaper(null);
+    }
+  };
+
+  // Control Bar Visibility: Toggled via keyboard command 'H' or dedicated UI trigger
+  const [showControlBar, setShowControlBar] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('neu_show_control_bar');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
+  const [controlBarToast, setControlBarToast] = useState<string | null>(null);
+
+  const toggleControlBar = () => {
+    playTactileClick();
+    setShowControlBar((prev) => {
+      const next = !prev;
+      localStorage.setItem('neu_show_control_bar', String(next));
+      setControlBarToast(next ? 'Controls revealed (Press H to hide)' : 'Controls hidden (Press H to reveal)');
+      setTimeout(() => setControlBarToast(null), 2500);
+      return next;
+    });
+  };
+
   // Browser Tabs State
   const [browserTabs, setBrowserTabs] = useState<BrowserTab[]>(INITIAL_TABS);
   const [activeTabId, setActiveTabId] = useState<string>('tab-1');
@@ -232,6 +336,23 @@ export default function App() {
   // Keyboard shortcut listener (/ to focus search, Esc to close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Keyboard command to toggle top control bar (Press 'H' or 'h', or Ctrl+B / Cmd+B)
+      if (
+        (e.key === 'h' || e.key === 'H' || (e.key === 'b' && (e.ctrlKey || e.metaKey))) &&
+        document.activeElement !== searchInputRef.current &&
+        !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName) &&
+        !showVoiceModal &&
+        !showDinoModal &&
+        !showAddShortcutModal &&
+        !showThemeModal &&
+        !showLocationModal &&
+        !showSettingsModal
+      ) {
+        e.preventDefault();
+        toggleControlBar();
+        return;
+      }
+
       if (
         e.key === '/' &&
         document.activeElement !== searchInputRef.current &&
@@ -332,16 +453,57 @@ export default function App() {
       }}
     >
       {/* Google Ambient Spheres with Dynamic Cursor Parallax */}
-      <GoogleAmbientSpheres visible={showAmbientSpheres && !isDark} mousePos={mousePos} />
+      <GoogleAmbientSpheres visible={showAmbientSpheres && !isDark && !activeWallpaper} mousePos={mousePos} />
 
-      {/* Elite Control Bar: State Switcher, Audio, View, Theme */}
-      <div className="fixed top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-btn bg-[#eef2f7]/90 dark:bg-[#1e222b]/90 backdrop-blur-md shadow-md border border-white/60 dark:border-white/5 text-xs animate-in fade-in duration-300">
+      {/* Dynamic Wallpaper Background Layer */}
+      {activeWallpaper && (
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none transition-all duration-700">
+          {activeWallpaper.startsWith('linear-gradient') || activeWallpaper.startsWith('radial-gradient') ? (
+            <div
+              className="absolute inset-0 transition-opacity duration-700"
+              style={{
+                background: activeWallpaper,
+                opacity: wallpaperDim,
+                filter: wallpaperBlur > 0 ? `blur(${wallpaperBlur}px)` : undefined,
+                transform: wallpaperBlur > 0 ? 'scale(1.05)' : undefined,
+              }}
+            />
+          ) : (
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
+              style={{
+                backgroundImage: `url("${activeWallpaper}")`,
+                opacity: wallpaperDim,
+                filter: wallpaperBlur > 0 ? `blur(${wallpaperBlur}px)` : undefined,
+                transform: wallpaperBlur > 0 ? 'scale(1.05)' : undefined,
+              }}
+            />
+          )}
+          {/* Subtle overlay for legibility */}
+          <div
+            className={`absolute inset-0 transition-colors duration-300 ${
+              isDark ? 'bg-black/40' : 'bg-slate-900/10'
+            }`}
+          />
+        </div>
+      )}
+
+      {/* Elite Control Bar: State Switcher, Audio, View, Theme (Non-blocking above card, H key command) */}
+      <div
+        className={`${
+          !showControlBar
+            ? 'hidden'
+            : viewMode === 'fullscreen'
+            ? 'fixed top-3 left-1/2 -translate-x-1/2 z-40'
+            : 'relative z-30 mb-3.5 shrink-0'
+        } flex items-center gap-1.5 px-3 py-1.5 rounded-full neu-btn bg-white/95 dark:bg-[#1e222b]/95 backdrop-blur-md shadow-lg border border-slate-300/80 dark:border-white/10 text-xs animate-in fade-in duration-300`}
+      >
         <button
           onClick={() => setUiMode('state1_minimal')}
-          className={`px-3 py-1 rounded-full transition-all font-medium flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-full transition-all font-semibold flex items-center gap-1.5 cursor-pointer ${
             activeUiState === 'state1_minimal'
               ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              : 'text-slate-850 dark:text-slate-200 hover:text-blue-600 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
           }`}
           title="State 1: Minimal New Tab (Screenshot 1)"
         >
@@ -351,10 +513,10 @@ export default function App() {
 
         <button
           onClick={() => setUiMode('state2_active')}
-          className={`px-3 py-1 rounded-full transition-all font-medium flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-full transition-all font-semibold flex items-center gap-1.5 cursor-pointer ${
             activeUiState === 'state2_active'
               ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              : 'text-slate-850 dark:text-slate-200 hover:text-blue-600 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
           }`}
           title="State 2: Active Search & Apps (Screenshot 2)"
         >
@@ -370,21 +532,39 @@ export default function App() {
             playTactileClick();
             setShowTabStrip(!showTabStrip);
           }}
-          className={`px-2.5 py-1 rounded-full transition-all font-medium flex items-center gap-1 ${
+          className={`px-2.5 py-1 rounded-full transition-all font-semibold flex items-center gap-1 cursor-pointer ${
             showTabStrip
-              ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold'
-              : 'text-slate-500 hover:text-slate-800'
+              ? 'bg-blue-100/90 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 font-bold border border-blue-300/70 dark:border-blue-800/50'
+              : 'text-slate-850 dark:text-slate-200 hover:text-blue-600'
           }`}
           title="Toggle Neumorphic Tab Strip"
         >
           <span className="text-[11px]">Tab Strip</span>
         </button>
 
+        {/* Wallpaper Studio Quick Trigger */}
+        <button
+          onClick={() => {
+            playTactileClick();
+            setShowThemeModal(true);
+          }}
+          className={`px-2.5 py-1 rounded-full transition-all font-semibold flex items-center gap-1.5 cursor-pointer ${
+            activeWallpaper
+              ? 'bg-blue-600 text-white shadow-xs font-bold'
+              : 'text-slate-850 dark:text-slate-200 hover:text-blue-600 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
+          }`}
+          title="Add or Customize Wallpaper"
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          <span className="text-[11px]">Wallpaper</span>
+          {activeWallpaper && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+        </button>
+
         {/* Audio Mute/Unmute */}
         <button
           onClick={toggleSound}
-          className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-            soundOn ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'
+          className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+            soundOn ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'
           }`}
           title={soundOn ? 'Mute Audio Feedback' : 'Enable Tactile Audio Feedback'}
         >
@@ -397,10 +577,10 @@ export default function App() {
             playTactileClick();
             setIsDark(!isDark);
           }}
-          className="w-6 h-6 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200/50"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer"
           title={isDark ? 'Switch to Light' : 'Switch to Dark'}
         >
-          {isDark ? <Sun className="w-3 h-3 text-amber-400" /> : <Moon className="w-3 h-3" />}
+          {isDark ? <Sun className="w-3 h-3 text-amber-400" /> : <Moon className="w-3 h-3 text-slate-700" />}
         </button>
 
         {/* Window/Fullscreen mode */}
@@ -409,12 +589,49 @@ export default function App() {
             playTactileClick();
             setViewMode(viewMode === 'window' ? 'fullscreen' : 'window');
           }}
-          className="w-6 h-6 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200/50"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer"
           title={viewMode === 'window' ? 'Fullscreen View' : 'Card Window View'}
         >
           {viewMode === 'window' ? <Maximize2 className="w-3 h-3" /> : <Minimize2 className="w-3 h-3" />}
         </button>
+
+        <div className="w-[1px] h-3.5 bg-slate-300 dark:bg-slate-700 mx-0.5" />
+
+        {/* Hide Command Button (H) */}
+        <button
+          onClick={toggleControlBar}
+          className="px-2 py-0.5 rounded-full text-slate-750 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 cursor-pointer font-semibold"
+          title="Hide Control Bar (or press 'H' key)"
+        >
+          <ChevronUp className="w-3.5 h-3.5 stroke-[2.2]" />
+          <span className="text-[10px] hidden sm:inline">Hide</span>
+          <kbd className="px-1 py-0.2 rounded bg-slate-200/90 dark:bg-slate-800 text-[9px] font-mono font-bold text-slate-700 dark:text-slate-300">
+            H
+          </kbd>
+        </button>
       </div>
+
+      {/* Floating Reveal Trigger Button when Control Bar is hidden */}
+      {!showControlBar && (
+        <button
+          onClick={toggleControlBar}
+          className="fixed top-3 right-4 z-40 px-3 py-1.5 rounded-full neu-btn bg-white/95 dark:bg-[#1e222b]/95 backdrop-blur-md shadow-md border border-slate-300/80 dark:border-white/10 text-xs font-semibold text-slate-850 dark:text-slate-200 flex items-center gap-1.5 hover:text-blue-600 hover:scale-105 transition-all cursor-pointer animate-in fade-in"
+          title="Show Controls Bar (or press 'H' key)"
+        >
+          <Sliders className="w-3.5 h-3.5 text-blue-600 stroke-[2.2]" />
+          <span>Controls</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+            H
+          </kbd>
+        </button>
+      )}
+
+      {/* Toast Feedback for Keyboard Command 'H' */}
+      {controlBarToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-slate-900/90 text-white text-xs font-semibold backdrop-blur-md shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200 flex items-center gap-2">
+          <span>{controlBarToast}</span>
+        </div>
+      )}
 
       {/* Main Browser Canvas Card */}
       <div
@@ -422,17 +639,27 @@ export default function App() {
           viewMode === 'fullscreen'
             ? 'min-h-screen rounded-none'
             : 'max-w-[1040px] min-h-[620px] md:min-h-[600px] rounded-[32px]'
+        } ${
+          activeWallpaper && frostedCard
+            ? 'backdrop-blur-2xl bg-white/70 dark:bg-[#1a1e27]/75 border border-white/50 dark:border-white/10 shadow-2xl'
+            : activeWallpaper
+            ? 'backdrop-blur-md bg-[#eef2f7]/95 dark:bg-[#1a1e27]/95 shadow-2xl'
+            : ''
         }`}
-        style={{
-          backgroundColor:
-            isDark
-              ? '#1a1e27'
-              : themePreset === 'warm'
-              ? '#f6f3ee'
-              : themePreset === 'snow'
-              ? '#f8fafc'
-              : '#eef2f7',
-        }}
+        style={
+          !activeWallpaper
+            ? {
+                backgroundColor:
+                  isDark
+                    ? '#1a1e27'
+                    : themePreset === 'warm'
+                    ? '#f6f3ee'
+                    : themePreset === 'snow'
+                    ? '#f8fafc'
+                    : '#eef2f7',
+              }
+            : undefined
+        }
       >
         {/* Neumorphic Tab Strip */}
         {showTabStrip && (
@@ -464,12 +691,12 @@ export default function App() {
                   setShowMailMenu(false);
                   setShowUserMenu(false);
                 }}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 neu-btn cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-850 dark:text-slate-200 neu-btn cursor-pointer ${
                   showLanguageMenu ? 'neu-btn-active' : ''
                 }`}
                 aria-label="Select Language"
               >
-                <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 stroke-[2.2]" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300 stroke-[2.2]" />
                 <span className="tracking-tight">{currentLanguage}</span>
               </button>
 
@@ -509,12 +736,12 @@ export default function App() {
                   setShowLanguageMenu(false);
                   setShowUserMenu(false);
                 }}
-                className={`w-9 h-9 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer ${
-                  showMailMenu ? 'neu-btn-active' : ''
+                className={`w-9 h-9 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer ${
+                  showMailMenu ? 'neu-btn-active text-blue-600 dark:text-blue-400' : ''
                 }`}
                 aria-label="Gmail Notifications"
               >
-                <Mail className="w-4 h-4 stroke-[1.8]" />
+                <Mail className="w-4 h-4 stroke-[2]" />
               </button>
 
               {showMailMenu && <MailMenu onClose={() => setShowMailMenu(false)} />}
@@ -526,10 +753,10 @@ export default function App() {
                 playTactileClick();
                 setShowThemeModal(true);
               }}
-              className="w-9 h-9 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer"
+              className="w-9 h-9 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer"
               title="Customize Themes & Wallpaper"
             >
-              <ImageIcon className="w-4 h-4 stroke-[1.8]" />
+              <ImageIcon className="w-4 h-4 stroke-[2]" />
             </button>
 
             {/* Google Apps 9-Dots Grid Button */}
@@ -546,7 +773,7 @@ export default function App() {
                   setShowLanguageMenu(false);
                   setShowUserMenu(false);
                 }}
-                className={`w-9 h-9 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer ${
+                className={`w-9 h-9 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer ${
                   showAppsMenu || (activeUiState === 'state2_active' && isAppsDrawerOpen)
                     ? 'neu-btn-active text-blue-600 dark:text-blue-400'
                     : ''
@@ -663,7 +890,7 @@ export default function App() {
                   }}
                   onFocus={() => setIsSearchFocused(true)}
                   placeholder="Search Google or type a URL"
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 placeholder:font-normal font-medium tracking-tight"
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-slate-950 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-medium font-semibold tracking-tight"
                   autoComplete="off"
                   spellCheck="false"
                 />
@@ -727,11 +954,11 @@ export default function App() {
                     playTactileClick();
                     setShowAddShortcutModal(true);
                   }}
-                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer group"
+                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer group"
                   title="Add shortcut / link"
                   aria-label="Add shortcut"
                 >
-                  <Plus className="w-4 h-4 stroke-[1.9] group-hover:scale-110 transition-transform" />
+                  <Plus className="w-4 h-4 stroke-[2.2] group-hover:scale-110 transition-transform" />
                 </button>
 
                 {/* 2. Image Icon: Wallpaper & Theme Customizer */}
@@ -740,11 +967,11 @@ export default function App() {
                     playTactileClick();
                     setShowThemeModal(true);
                   }}
-                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer group"
+                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer group"
                   title="Customize canvas & theme"
                   aria-label="Customize canvas and theme"
                 >
-                  <ImageIcon className="w-4 h-4 stroke-[1.8] group-hover:scale-110 transition-transform" />
+                  <ImageIcon className="w-4 h-4 stroke-[2] group-hover:scale-110 transition-transform" />
                 </button>
 
                 {/* 3. Bookmark Ribbon Icon: Saved Bookmarks */}
@@ -753,11 +980,11 @@ export default function App() {
                     playTactileClick();
                     setShowBookmarksModal(true);
                   }}
-                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer group"
+                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer group"
                   title="Bookmarks & Saved pages"
                   aria-label="Bookmarks"
                 >
-                  <Bookmark className="w-4 h-4 stroke-[1.8] group-hover:scale-110 transition-transform" />
+                  <Bookmark className="w-4 h-4 stroke-[2] group-hover:scale-110 transition-transform" />
                 </button>
 
                 {/* 4. Smiley Face Icon: Chrome Arcade / Dino Runner Mini-game */}
@@ -766,11 +993,11 @@ export default function App() {
                     playTactileClick();
                     setShowDinoModal(true);
                   }}
-                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-600 dark:text-slate-300 cursor-pointer group"
+                  className="w-10 h-10 rounded-full neu-btn flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer group"
                   title="Chrome Arcade & Goodies"
                   aria-label="Chrome Arcade"
                 >
-                  <Smile className="w-4 h-4 stroke-[1.8] group-hover:scale-110 transition-transform" />
+                  <Smile className="w-4 h-4 stroke-[2] group-hover:scale-110 transition-transform" />
                 </button>
               </div>
             )}
@@ -780,7 +1007,7 @@ export default function App() {
         {/* ================= BOTTOM BAR / FOOTER ================= */}
         {activeUiState === 'state2_active' ? (
           /* STATE 2 FOOTER: Flag + Classic Google Navigation Links */
-          <footer className="w-full flex flex-col gap-2 pt-3 border-t border-slate-200/50 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+          <footer className="w-full flex flex-col gap-2 pt-3 border-t border-slate-200/70 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-400">
             {/* Top row with flag */}
             <div className="flex items-center gap-2">
               <button
@@ -792,18 +1019,18 @@ export default function App() {
                 title="Change Region / Country"
               >
                 <IndianFlag className="w-5 h-3.5" />
-                <span className="text-slate-600 dark:text-slate-300 font-medium">India</span>
+                <span className="text-slate-850 dark:text-slate-200 font-semibold">India</span>
               </button>
             </div>
 
             {/* Links row */}
             <div className="flex flex-wrap items-center justify-between gap-y-2">
-              <div className="flex items-center gap-4 md:gap-6">
+              <div className="flex items-center gap-4 md:gap-6 font-medium">
                 <a
                   href="https://ads.google.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors"
                 >
                   Advertising
                 </a>
@@ -811,7 +1038,7 @@ export default function App() {
                   href="https://www.google.com/services/"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors"
                 >
                   Business
                 </a>
@@ -819,7 +1046,7 @@ export default function App() {
                   href="https://about.google/"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors"
                 >
                   About
                 </a>
@@ -827,18 +1054,18 @@ export default function App() {
                   href="https://www.google.com/search/howsearchworks/"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors"
                 >
                   How Search works
                 </a>
               </div>
 
-              <div className="flex items-center gap-4 md:gap-6">
+              <div className="flex items-center gap-4 md:gap-6 font-medium">
                 <a
                   href="https://policies.google.com/privacy"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors"
                 >
                   Privacy
                 </a>
@@ -846,16 +1073,27 @@ export default function App() {
                   href="https://policies.google.com/terms"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors"
                 >
                   Terms
                 </a>
                 <button
                   onClick={() => {
                     playTactileClick();
+                    setShowThemeModal(true);
+                  }}
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1 font-semibold"
+                  title="Add or Customize Wallpaper"
+                >
+                  <ImageIcon className="w-3 h-3 text-blue-600" />
+                  <span>Wallpaper</span>
+                </button>
+                <button
+                  onClick={() => {
+                    playTactileClick();
                     setShowSettingsModal(true);
                   }}
-                  className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   Settings
                 </button>
@@ -864,19 +1102,19 @@ export default function App() {
           </footer>
         ) : (
           /* STATE 1 FOOTER: Location Crosshair + Bangladesh + Info & Settings Icons */
-          <footer className="w-full flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-normal relative z-10 pt-4">
+          <footer className="w-full flex items-center justify-between text-slate-700 dark:text-slate-400 text-xs font-normal relative z-10 pt-4">
             <button
               onClick={() => {
                 playTactileClick();
                 setShowLocationModal(true);
               }}
-              className="flex items-center gap-2 hover:text-slate-900 dark:hover:text-slate-200 transition-colors group cursor-pointer py-1 px-1.5 rounded-xl hover:bg-slate-200/30 dark:hover:bg-slate-800/30"
+              className="flex items-center gap-2 hover:text-slate-950 dark:hover:text-slate-200 transition-colors group cursor-pointer py-1 px-1.5 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800/30"
               title="Change Location"
             >
               <div className="relative w-4 h-4 flex items-center justify-center">
-                <LocateFixed className="w-3.5 h-3.5 stroke-[2] group-hover:text-blue-500 transition-colors" />
+                <LocateFixed className="w-3.5 h-3.5 stroke-[2.2] text-slate-700 dark:text-slate-300 group-hover:text-blue-600 transition-colors" />
               </div>
-              <span className="tracking-tight text-xs text-slate-600 dark:text-slate-300 font-normal">
+              <span className="tracking-tight text-xs text-slate-850 dark:text-slate-200 font-semibold">
                 {currentLocation}
               </span>
             </button>
@@ -885,13 +1123,25 @@ export default function App() {
               <button
                 onClick={() => {
                   playTactileClick();
+                  setShowThemeModal(true);
+                }}
+                className="p-1 rounded-full text-slate-750 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100 transition-colors cursor-pointer"
+                title="Add or Customize Wallpaper"
+                aria-label="Wallpaper"
+              >
+                <ImageIcon className="w-4 h-4 stroke-[2]" />
+              </button>
+
+              <button
+                onClick={() => {
+                  playTactileClick();
                   setShowInfoModal(true);
                 }}
-                className="p-1 rounded-full hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                className="p-1 rounded-full text-slate-750 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100 transition-colors cursor-pointer"
                 title="About this browser UI"
                 aria-label="About"
               >
-                <Info className="w-4 h-4 stroke-[1.9]" />
+                <Info className="w-4 h-4 stroke-[2]" />
               </button>
 
               <button
@@ -899,11 +1149,11 @@ export default function App() {
                   playTactileClick();
                   setShowSettingsModal(true);
                 }}
-                className="p-1 rounded-full hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                className="p-1 rounded-full text-slate-750 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100 transition-colors cursor-pointer"
                 title="Browser settings"
                 aria-label="Settings"
               >
-                <Settings className="w-4 h-4 stroke-[1.9]" />
+                <Settings className="w-4 h-4 stroke-[2]" />
               </button>
             </div>
           </footer>
@@ -944,6 +1194,17 @@ export default function App() {
           playTactileClick();
           setIsDark(!isDark);
         }}
+        activeWallpaper={activeWallpaper}
+        onSelectWallpaper={handleSelectWallpaper}
+        wallpaperBlur={wallpaperBlur}
+        onChangeWallpaperBlur={handleChangeWallpaperBlur}
+        wallpaperDim={wallpaperDim}
+        onChangeWallpaperDim={handleChangeWallpaperDim}
+        frostedCard={frostedCard}
+        onToggleFrostedCard={handleToggleFrostedCard}
+        customWallpapers={customUserWallpapers}
+        onAddCustomWallpaper={handleAddCustomWallpaper}
+        onRemoveCustomWallpaper={handleRemoveCustomWallpaper}
       />
 
       <BookmarksModal

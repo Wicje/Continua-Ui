@@ -79,21 +79,21 @@ export const LiveGlanceWidget: React.FC<LiveGlanceWidgetProps> = ({
       title="Click to change location or view weather details"
     >
       {/* Clock glance */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
-        <Clock className="w-3.5 h-3.5 text-blue-500" />
-        <span className="font-mono tracking-tight">{time}</span>
-        <span className="text-[10px] text-slate-400 font-normal">· {date}</span>
+      <div className="flex items-center gap-1.5 text-xs text-slate-900 dark:text-slate-100 font-semibold">
+        <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[2.2]" />
+        <span className="font-mono tracking-tight font-bold">{time}</span>
+        <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">· {date}</span>
       </div>
 
       <div className="w-[1px] h-3.5 bg-slate-300 dark:bg-slate-700" />
 
       {/* Weather glance */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200">
-        {weather.icon === 'sun' && <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />}
-        {weather.icon === 'cloud' && <Cloud className="w-3.5 h-3.5 text-slate-400" />}
-        {weather.icon === 'rain' && <CloudRain className="w-3.5 h-3.5 text-blue-400" />}
-        <span className="font-semibold text-xs">{weather.temp}</span>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 hidden sm:inline">
+      <div className="flex items-center gap-1.5 text-xs text-slate-900 dark:text-slate-100">
+        {weather.icon === 'sun' && <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin-slow stroke-[2.2]" />}
+        {weather.icon === 'cloud' && <Cloud className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 stroke-[2.2]" />}
+        {weather.icon === 'rain' && <CloudRain className="w-3.5 h-3.5 text-blue-500 stroke-[2.2]" />}
+        <span className="font-bold text-xs">{weather.temp}</span>
+        <span className="text-[10px] text-slate-700 dark:text-slate-300 font-medium hidden sm:inline">
           {location}
         </span>
       </div>
